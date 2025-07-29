@@ -290,12 +290,25 @@
                     if (data.files && data.files.length > 0) {
                         playlistElement.innerHTML = '';
                         data.files.forEach(file => {
-                            const fileExt = file.split('.').pop();
-                            const isEncrypted = fileExt === 'Images2';
+                            const fileExt = file.split('.').pop().toLowerCase();
+                            const isEncrypted = fileExt === 'images2';
                             const fileCard = document.createElement('div');
                             fileCard.className = 'file-card bg-white rounded-lg shadow-md p-4 transition-all duration-200 cursor-pointer';
                             fileCard.setAttribute('draggable', 'true');
                             fileCard.setAttribute('ondragstart', `handleDragStart(event, '${file}')`);
+
+                            // Générer le lecteur intégré selon le type
+                            let mediaPlayer = '';
+                            if (!isEncrypted) {
+                                if (["jpg","jpeg","png","gif","bmp","webp"].includes(fileExt)) {
+                                    mediaPlayer = `<img src="/download/${encodeURIComponent(file)}" alt="${file}" class="w-full max-h-48 object-contain rounded mb-2" />`;
+                                } else if (["mp3","wav","ogg","flac","aac"].includes(fileExt)) {
+                                    mediaPlayer = `<audio controls class="w-full mb-2"><source src="/download/${encodeURIComponent(file)}" type="audio/${fileExt}">Votre navigateur ne supporte pas la lecture audio.</audio>`;
+                                } else if (["mp4","webm","avi","mov","mkv"].includes(fileExt)) {
+                                    mediaPlayer = `<video controls class="w-full max-h-48 mb-2"><source src="/download/${encodeURIComponent(file)}" type="video/${fileExt}">Votre navigateur ne supporte pas la lecture vidéo.</video>`;
+                                }
+                            }
+
                             fileCard.innerHTML = `
                                 <div class="flex items-start mb-3">
                                     <div class="mr-3">${getFileTypeIcon(file)}</div>
@@ -304,6 +317,7 @@
                                         <p class="text-sm text-gray-500">${isEncrypted ? 'Chiffré' : 'Déchiffré'}</p>
                                     </div>
                                 </div>
+                                ${mediaPlayer}
                                 <div class="flex justify-end space-x-2">
                                     <button onclick="downloadFile('${file}')" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200">
                                         Télécharger

@@ -35,7 +35,7 @@ Créer un lecteur média minimaliste qui :
 | Chiffrement AES (.Images2)                      | ✅ Terminé    |
 | Déchiffrement AES vers fichier original         | ✅ Terminé    |
 | Gestion de playlist (liste des fichiers)        | ✅ Terminé    |
-| Lecture dans navigateur (`<video>/<audio>`)     | 🟡 En cours   |
+| Lecture dans navigateur (`<video>/<audio>`)     | ✅ Terminé    |
 | Sécurisation de la clé (chiffrée + mot de passe)| 🟡 En cours   |
 | Export .exe (via pyinstaller)                   | 🔲 À faire    |
 | Documentation utilisateur                       | 🔲 À faire    |
