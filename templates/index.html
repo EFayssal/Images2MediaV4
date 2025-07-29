@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Media Manager</title>
+    <title>Group Images 2 Secure file manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .file-card:hover {
@@ -21,7 +21,7 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <header class="mb-8 text-center">
-            <h1 class="text-4xl font-bold text-blue-600 mb-2">Secure Media Manager</h1>
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">GROUP IMAGES 2 Secure Media Manager</h1>
             <p class="text-gray-600">Protégez vos fichiers médias avec chiffrement AES</p>
         </header>
 
@@ -83,7 +83,7 @@
                         </svg>
                         <div>
                             <h3 class="font-medium text-blue-800">Chiffrer un fichier</h3>
-                            <p class="text-sm text-blue-600">Protéger un fichier avec extension .Images2</p>
+                            <p class="text-sm text-blue-600">Protéger un fichier avec chiffrement AES</p>
                         </div>
                     </button>
                     <button onclick="decryptFile()" class="p-4 bg-green-100 rounded-lg hover:bg-green-200 transition-colors flex items-center">
@@ -92,7 +92,7 @@
                         </svg>
                         <div>
                             <h3 class="font-medium text-green-800">Déchiffrer un fichier</h3>
-                            <p class="text-sm text-green-600">Restaurer un fichier .Images2 à son format original</p>
+                            <p class="text-sm text-green-600">Restaurer un fichier chiffré à son format original</p>
                         </div>
                     </button>
                 </div>
@@ -112,6 +112,20 @@
                 <div id="playlist" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Files will be loaded here -->
                     <p class="text-gray-500">Aucun fichier disponible. Importez et chiffrez un fichier pour commencer.</p>
+                </div>
+                <!-- Corbeille Drag & Drop -->
+                <div id="trashBin" class="fixed bottom-8 right-8 z-50 flex flex-col items-center cursor-pointer opacity-80 hover:opacity-100 transition-opacity" 
+                    ondragover="event.preventDefault(); this.classList.add('ring-4','ring-red-400');" 
+                    ondragleave="this.classList.remove('ring-4','ring-red-400');" 
+                    ondrop="handleDropOnTrash(event); this.classList.remove('ring-4','ring-red-400');">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-red-600 bg-white rounded-full shadow-lg p-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4a1 1 0 011-1h6a1 1 0 011 1v3" />
+                    </svg>
+                    <span class="text-xs text-red-700 mt-1">Glissez ici pour supprimer</span>
+                </div>
+                <!-- Section pour afficher le contenu du dossier uploads -->
+                <div id="uploadsContent" class="mt-6 p-4 bg-gray-50 rounded-lg hidden">
+                    <!-- Le contenu sera chargé ici par JavaScript -->
                 </div>
             </section>
         </main>
@@ -208,6 +222,7 @@
                 if (data.success) {
                     showToast('Fichier uploadé avec succès', 'success');
                     loadPlaylist();
+                    showUploadsContent();
                     fileInput.value = '';
                     document.getElementById('fileInfo').classList.add('hidden');
                 } else {
@@ -272,26 +287,20 @@
                 .then(response => response.json())
                 .then(data => {
                     const playlistElement = document.getElementById('playlist');
-                    
                     if (data.files && data.files.length > 0) {
                         playlistElement.innerHTML = '';
                         data.files.forEach(file => {
                             const fileExt = file.split('.').pop();
                             const isEncrypted = fileExt === 'Images2';
-                            
                             const fileCard = document.createElement('div');
                             fileCard.className = 'file-card bg-white rounded-lg shadow-md p-4 transition-all duration-200 cursor-pointer';
+                            fileCard.setAttribute('draggable', 'true');
+                            fileCard.setAttribute('ondragstart', `handleDragStart(event, '${file}')`);
                             fileCard.innerHTML = `
                                 <div class="flex items-start mb-3">
-                                    <div class="bg-${isEncrypted ? 'blue' : 'green'}-100 p-3 rounded-lg mr-3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-${isEncrypted ? 'blue' : 'green'}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            ${isEncrypted ? 
-                                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />' :
-                                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />'}
-                                        </svg>
-                                    </div>
+                                    <div class="mr-3">${getFileTypeIcon(file)}</div>
                                     <div class="flex-1">
-                                        <h3 class="font-medium text-gray-800 truncate">${file}</h3>
+                                        <h3 class="font-medium text-gray-800 truncate flex items-center">${file} ${getFileTypeBadge(file)}</h3>
                                         <p class="text-sm text-gray-500">${isEncrypted ? 'Chiffré' : 'Déchiffré'}</p>
                                     </div>
                                 </div>
@@ -299,12 +308,46 @@
                                     <button onclick="downloadFile('${file}')" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200">
                                         Télécharger
                                     </button>
+                                    ${!isEncrypted ? `<button onclick=\"encryptFileByName('${file}')\" class=\"px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200\" title=\"Chiffrer\">Chiffrer</button>` : `<button onclick=\"decryptFileByName('${file}')\" class=\"px-3 py-1 bg-green-100 text-green-700 rounded-md text-sm hover:bg-green-200\" title=\"Déchiffrer\">Déchiffrer</button>`}
+                                    <button onclick="deleteFile('${file}')" class="px-3 py-1 bg-red-100 text-red-700 rounded-md text-sm hover:bg-red-200" title="Supprimer">
+                                        Supprimer
+                                    </button>
                                 </div>
                             `;
                             playlistElement.appendChild(fileCard);
                         });
                     } else {
                         playlistElement.innerHTML = '<p class="text-gray-500">Aucun fichier disponible. Importez et chiffrez un fichier pour commencer.</p>';
+                    }
+                });
+        }
+        // Drag & Drop pour suppression via corbeille
+        let draggedFile = null;
+        function handleDragStart(event, filename) {
+            draggedFile = filename;
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDropOnTrash(event) {
+            event.preventDefault();
+            if (draggedFile) {
+                deleteFile(draggedFile);
+                draggedFile = null;
+            }
+        }
+
+        // Show uploads content
+        function showUploadsContent() {
+            fetch('/playlist')
+                .then(response => response.json())
+                .then(data => {
+                    const uploadsDiv = document.getElementById('uploadsContent');
+                    if (!uploadsDiv) return;
+                    if (data.files && data.files.length > 0) {
+                        uploadsDiv.innerHTML = '<b>Contenu du dossier uploads :</b><ul class="text-xs mt-2">' +
+                            data.files.map(f => `<li>${f}</li>`).join('') + '</ul>';
+                    } else {
+                        uploadsDiv.innerHTML = '<b>Contenu du dossier uploads :</b> <span class="text-xs">(vide)</span>';
                     }
                 });
         }
@@ -349,6 +392,99 @@
             const toast = document.getElementById('toast');
             toast.classList.add('translate-y-10', 'opacity-0');
             setTimeout(() => toast.classList.add('hidden'), 300);
+        }
+
+        function getFileTypeIcon(file) {
+            const ext = file.split('.').pop().toLowerCase();
+            if (["jpg","jpeg","png","gif","bmp","webp"].includes(ext))
+                return '<svg class="h-6 w-6 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 14l-4-4m0 0l-4 4m4-4v6" /></svg>';
+            if (["mp3","wav","ogg","flac","aac"].includes(ext))
+                return '<svg class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-2v13" /></svg>';
+            if (["mp4","webm","avi","mov","mkv"].includes(ext))
+                return '<svg class="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A2 2 0 0122 9.618v4.764a2 2 0 01-2.447 1.894L15 14M4 6v12a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2z" /></svg>';
+            if (["pdf","doc","docx","txt","xls","xlsx","ppt","pptx"].includes(ext))
+                return '<svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7v10M17 7v10M7 7h10M7 17h10" /></svg>';
+            if (["Images2"].includes(ext))
+                return '<svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>';
+            return '<svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>';
+        }
+
+        function getFileTypeBadge(file) {
+            const ext = file.split('.').pop().toLowerCase();
+            if (["jpg","jpeg","png","gif","bmp","webp"].includes(ext)) return '<span class="ml-2 px-2 py-0.5 bg-pink-100 text-pink-700 rounded text-xs">Image</span>';
+            if (["mp3","wav","ogg","flac","aac"].includes(ext)) return '<span class="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">Audio</span>';
+            if (["mp4","webm","avi","mov","mkv"].includes(ext)) return '<span class="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">Vidéo</span>';
+            if (["pdf","doc","docx","txt","xls","xlsx","ppt","pptx"].includes(ext)) return '<span class="ml-2 px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">Document</span>';
+            if (["Images2"].includes(ext)) return '<span class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">Chiffré</span>';
+            return '<span class="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Autre</span>';
+        }
+
+        // Supprimer un fichier sans confirmation
+        function deleteFile(filename) {
+            // Masquer la carte du fichier immédiatement
+            const playlistElement = document.getElementById('playlist');
+            if (playlistElement) {
+                const cards = playlistElement.querySelectorAll('.file-card');
+                cards.forEach(card => {
+                    if (card.innerHTML.includes(filename)) {
+                        card.style.opacity = '0.3';
+                        card.style.pointerEvents = 'none';
+                        setTimeout(() => card.remove(), 200);
+                    }
+                });
+            }
+            fetch('/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Fichier supprimé', 'success');
+                    loadPlaylist();
+                    showUploadsContent();
+                } else {
+                    showToast(data.message || 'Erreur lors de la suppression', 'error');
+                }
+            });
+        }
+
+        // Ajouter les fonctions JS pour chiffrer/déchiffrer par nom :
+        function encryptFileByName(filename) {
+            fetch('/encrypt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Fichier chiffré avec succès', 'success');
+                    loadPlaylist();
+                    showUploadsContent();
+                } else {
+                    showToast(data.message || 'Erreur lors du chiffrement', 'error');
+                }
+            });
+        }
+
+        function decryptFileByName(filename) {
+            fetch('/decrypt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Fichier déchiffré avec succès', 'success');
+                    loadPlaylist();
+                    showUploadsContent();
+                } else {
+                    showToast(data.message || 'Erreur lors du déchiffrement', 'error');
+                }
+            });
         }
     </script>
 </body>

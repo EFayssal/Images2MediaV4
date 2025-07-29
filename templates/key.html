@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Entrer la clé d'accès</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Authentification requise</h2>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        <form method="post">
+            <label for="key">Veuillez entrer votre clé :</label>
+            <input type="password" id="key" name="key" required>
+            <button type="submit">Valider</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -13,7 +13,39 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return True  # Autoriser tous les fichiers
+
+@app.route('/delete', methods=['POST'])
+def delete_file():
+    data = request.get_json()
+    filename = data.get('filename')
+    if not filename:
+        return jsonify({'success': False, 'message': 'Nom de fichier manquant'}), 400
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    print(f"Suppression demandée pour : {file_path}")
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        print(f"Fichier supprimé : {file_path}")
+        return jsonify({'success': True})
+    else:
+        print(f"Fichier introuvable : {file_path}")
+        return jsonify({'success': False, 'message': 'Fichier introuvable'}), 404
+from flask import Flask, render_template, request, jsonify, send_from_directory
+import os
+import json
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+UPLOAD_FOLDER = 'uploads'
+KEY_FILE = 'key.txt'
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'mp4', 'mp3', 'pdf', 'txt', 'Images2'])
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return True  # Autoriser tous les fichiers
 
 @app.route('/')
 def index():
@@ -40,11 +72,12 @@ def upload():
     file = request.files['file']
     if file.filename == '':
         return jsonify({'success': False, 'message': 'No selected file'})
-    if file and allowed_file(file.filename):
+    if file:
+        # Utiliser secure_filename pour garantir la cohérence avec la suppression
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return jsonify({'success': True})
-    return jsonify({'success': False, 'message': 'Invalid file type'})
+    return jsonify({'success': False, 'message': 'Invalid file'})
 
 @app.route('/playlist')
 def playlist():

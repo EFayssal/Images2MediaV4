@@ -1,4 +1,4 @@
-# 🔐 Images2 Secure Media Player (Flask Edition)
+# 🔐 Images2 Secure Media Player Phase 2 
 
 Application Flask pour importer, chiffrer, lire et déchiffrer des fichiers médias dans un format sécurisé `.Images2`.
 
@@ -34,9 +34,9 @@ Créer un lecteur média minimaliste qui :
 | Système de clé sécurisée (clé.txt)              | ✅ Terminé    |
 | Chiffrement AES (.Images2)                      | ✅ Terminé    |
 | Déchiffrement AES vers fichier original         | ✅ Terminé    |
-| Gestion de playlist (liste des fichiers)        | 🟡 En cours   |
+| Gestion de playlist (liste des fichiers)        | ✅ Terminé    |
 | Lecture dans navigateur (`<video>/<audio>`)     | 🟡 En cours   |
-| Sécurisation de la clé (chiffrée + mot de passe)| 🔲 À faire    |
+| Sécurisation de la clé (chiffrée + mot de passe)| 🟡 En cours   |
 | Export .exe (via pyinstaller)                   | 🔲 À faire    |
 | Documentation utilisateur                       | 🔲 À faire    |
 
