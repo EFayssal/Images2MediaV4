@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Media Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .file-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar {
+            height: 4px;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-blue-600 mb-2">Secure Media Manager</h1>
+            <p class="text-gray-600">Protégez vos fichiers médias avec chiffrement AES</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="bg-white rounded-lg shadow-lg p-6">
+            <!-- Key Setup (if not set) -->
+            <div id="keySetup" class="mb-8 p-6 bg-blue-50 rounded-lg hidden">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-4">Configuration initiale</h2>
+                <p class="mb-4 text-gray-700">Veuillez définir une clé de chiffrement sécurisée. Cette clé sera utilisée pour protéger tous vos fichiers.</p>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="password" id="encryptionKey" placeholder="Entrez votre clé de chiffrement" 
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="saveKey()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Enregistrer la clé
+                    </button>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">Note: Gardez cette clé en sécurité. Sans elle, vous ne pourrez pas déchiffrer vos fichiers.</p>
+            </div>
+
+            <!-- File Upload Section -->
+            <section id="uploadSection" class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Importer un fichier</h2>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <input type="file" id="fileInput" class="hidden">
+                    <div class="flex flex-col items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="mb-4 text-gray-600">Glissez-déposez votre fichier ici ou cliquez pour sélectionner</p>
+                        <button onclick="document.getElementById('fileInput').click()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Sélectionner un fichier
+                        </button>
+                    </div>
+                    <div id="fileInfo" class="mt-4 hidden">
+                        <p class="text-gray-700">Fichier sélectionné: <span id="fileName" class="font-medium"></span></p>
+                        <div class="mt-2">
+                            <button onclick="uploadFile()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mr-2">
+                                Uploader
+                            </button>
+                            <button onclick="cancelUpload()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                                Annuler
+                            </button>
+                        </div>
+                        <div id="uploadProgress" class="mt-4 hidden">
+                            <div class="progress-bar rounded-full w-0"></div>
+                            <p class="text-sm text-gray-500 mt-1">Téléchargement en cours...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Action Buttons -->
+            <section class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Actions</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="encryptFile()" class="p-4 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <div>
+                            <h3 class="font-medium text-blue-800">Chiffrer un fichier</h3>
+                            <p class="text-sm text-blue-600">Protéger un fichier avec extension .Images2</p>
+                        </div>
+                    </button>
+                    <button onclick="decryptFile()" class="p-4 bg-green-100 rounded-lg hover:bg-green-200 transition-colors flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                        </svg>
+                        <div>
+                            <h3 class="font-medium text-green-800">Déchiffrer un fichier</h3>
+                            <p class="text-sm text-green-600">Restaurer un fichier .Images2 à son format original</p>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Playlist Section -->
+            <section>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-semibold text-gray-800">Vos fichiers</h2>
+                    <button onclick="refreshPlaylist()" class="flex items-center text-blue-600 hover:text-blue-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Rafraîchir
+                    </button>
+                </div>
+                <div id="playlist" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Files will be loaded here -->
+                    <p class="text-gray-500">Aucun fichier disponible. Importez et chiffrez un fichier pour commencer.</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Status Toast -->
+        <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-10 opacity-0 transition-all duration-300 hidden">
+            <div class="flex items-center">
+                <span id="toastMessage"></span>
+                <button onclick="hideToast()" class="ml-4 text-gray-300 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if key is set on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkKeyStatus();
+            loadPlaylist();
+            
+            // Setup file input change handler
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    document.getElementById('fileName').textContent = e.target.files[0].name;
+                    document.getElementById('fileInfo').classList.remove('hidden');
+                }
+            });
+        });
+
+        // Check if encryption key is set
+        function checkKeyStatus() {
+            fetch('/check_key')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.key_exists) {
+                        document.getElementById('keySetup').classList.remove('hidden');
+                        document.getElementById('uploadSection').classList.add('hidden');
+                    }
+                });
+        }
+
+        // Save encryption key
+        function saveKey() {
+            const key = document.getElementById('encryptionKey').value;
+            if (!key) {
+                showToast('Veuillez entrer une clé de chiffrement', 'error');
+                return;
+            }
+
+            fetch('/save_key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ key: key })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('keySetup').classList.add('hidden');
+                    document.getElementById('uploadSection').classList.remove('hidden');
+                    showToast('Clé enregistrée avec succès', 'success');
+                } else {
+                    showToast('Erreur lors de l\'enregistrement de la clé', 'error');
+                }
+            });
+        }
+
+        // Upload file
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                showToast('Veuillez sélectionner un fichier', 'error');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const progressBar = document.querySelector('#uploadProgress .progress-bar');
+            document.getElementById('uploadProgress').classList.remove('hidden');
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('uploadProgress').classList.add('hidden');
+                if (data.success) {
+                    showToast('Fichier uploadé avec succès', 'success');
+                    loadPlaylist();
+                    fileInput.value = '';
+                    document.getElementById('fileInfo').classList.add('hidden');
+                } else {
+                    showToast('Erreur lors de l\'upload du fichier', 'error');
+                }
+            })
+            .catch(error => {
+                document.getElementById('uploadProgress').classList.add('hidden');
+                showToast('Erreur lors de l\'upload du fichier', 'error');
+            });
+        }
+
+        // Cancel upload
+        function cancelUpload() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').classList.add('hidden');
+        }
+
+        // Encrypt file
+        function encryptFile() {
+            fetch('/encrypt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename: prompt('Entrez le nom du fichier à chiffrer:') })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Fichier chiffré avec succès', 'success');
+                    loadPlaylist();
+                } else {
+                    showToast(data.message || 'Erreur lors du chiffrement', 'error');
+                }
+            });
+        }
+
+        // Decrypt file
+        function decryptFile() {
+            fetch('/decrypt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename: prompt('Entrez le nom du fichier à déchiffrer:') })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Fichier déchiffré avec succès', 'success');
+                    loadPlaylist();
+                } else {
+                    showToast(data.message || 'Erreur lors du déchiffrement', 'error');
+                }
+            });
+        }
+
+        // Load playlist
+        function loadPlaylist() {
+            fetch('/playlist')
+                .then(response => response.json())
+                .then(data => {
+                    const playlistElement = document.getElementById('playlist');
+                    
+                    if (data.files && data.files.length > 0) {
+                        playlistElement.innerHTML = '';
+                        data.files.forEach(file => {
+                            const fileExt = file.split('.').pop();
+                            const isEncrypted = fileExt === 'Images2';
+                            
+                            const fileCard = document.createElement('div');
+                            fileCard.className = 'file-card bg-white rounded-lg shadow-md p-4 transition-all duration-200 cursor-pointer';
+                            fileCard.innerHTML = `
+                                <div class="flex items-start mb-3">
+                                    <div class="bg-${isEncrypted ? 'blue' : 'green'}-100 p-3 rounded-lg mr-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-${isEncrypted ? 'blue' : 'green'}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            ${isEncrypted ? 
+                                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />' :
+                                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />'}
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="font-medium text-gray-800 truncate">${file}</h3>
+                                        <p class="text-sm text-gray-500">${isEncrypted ? 'Chiffré' : 'Déchiffré'}</p>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end space-x-2">
+                                    <button onclick="downloadFile('${file}')" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200">
+                                        Télécharger
+                                    </button>
+                                </div>
+                            `;
+                            playlistElement.appendChild(fileCard);
+                        });
+                    } else {
+                        playlistElement.innerHTML = '<p class="text-gray-500">Aucun fichier disponible. Importez et chiffrez un fichier pour commencer.</p>';
+                    }
+                });
+        }
+
+        // Refresh playlist
+        function refreshPlaylist() {
+            loadPlaylist();
+            showToast('Liste des fichiers actualisée', 'info');
+        }
+
+        // Download file
+        function downloadFile(filename) {
+            window.open(`/download/${encodeURIComponent(filename)}`, '_blank');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            
+            // Set color based on type
+            toast.className = toast.className.replace(/bg-(red|green|blue|gray)-800/, '');
+            if (type === 'error') toast.classList.add('bg-red-800');
+            else if (type === 'success') toast.classList.add('bg-green-800');
+            else if (type === 'info') toast.classList.add('bg-blue-800');
+            else toast.classList.add('bg-gray-800');
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            }, 10);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(hideToast, 5000);
+        }
+
+        // Hide toast
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('translate-y-10', 'opacity-0');
+            setTimeout(() => toast.classList.add('hidden'), 300);
+        }
+    </script>
+</body>
+</html>
